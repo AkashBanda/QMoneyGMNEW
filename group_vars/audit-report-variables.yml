@@ -5,7 +5,7 @@ QUARTER: "Q1"
 
 YEAR: "2025"
 
-DIRECTORY: "/data/Audit_Report/{{ PROJECT }}/{{ YEAR }}/{{ QUARTER }}"
+DIRECTORY: "/root/Ansible/QMoneyGM/{{ PROJECT }}/{{ YEAR }}/{{ QUARTER }}"
 
 BFFSANITYDATE: 12-04-2025
 
