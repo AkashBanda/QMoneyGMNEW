@@ -1,0 +1,71 @@
+---
+- name: Check if Kafka service file exists - Kafka
+  ansible.builtin.stat:
+    path: /usr/lib/systemd/system/kafka.service
+  register: kafka_service_file
+
+- block:
+    - name: Exit if Kafka service file not found - Kafka
+      ansible.builtin.fail:
+        msg: "Kafka service file not found. Exiting."
+      when: kafka_service_file.stat.exists == false
+
+    - name: Execute Bash script - Kafka
+      ansible.builtin.shell: |
+        #!/bin/bash
+        filename="/tmp/kafka_version_{{ lookup('pipe', 'date +%d%m%Y') }}.txt"
+        # Get the Kafka version
+        ka_version=$(grep Environment /usr/lib/systemd/system/kafka.service | cut -d'/' -f4 | cut -d'-' -f2)
+
+        # Path to the CSV file
+        csv_file="/tmp/version.csv"
+
+        # Search for a row in the CSV file where the Kafka version matches
+        k_row=$(awk -v ka_version="$ka_version" -F',' '$11 == ka_version' "$csv_file")
+
+        # Check if a row is found
+        if [ -n "$k_row" ]; then
+            echo "Kafka version matches an entry in the CSV file."
+            # Extract next two cells
+            k_c=$(echo "$k_row" | awk -F',' '{print "EOS: "$12,"EOL: " $13}')
+            echo "Output: $k_c" >> "$filename"
+        fi
+      register: ka_task_output
+  when: kafka_service_file.stat.exists == true
+  
+- name: create directory if not exists - Kafka
+  file:
+    path: "{{ DIRECTORY }}"
+    state: directory
+  delegate_to: localhost
+  run_once: true
+
+- name: Retrieve version information - Kafka
+  shell: grep Environment /usr/lib/systemd/system/kafka.service | cut -d'/' -f4 | cut -d'_' -f2
+  register: version_output
+  when: kafka_service_file.stat.exists == true
+
+- name: Retrieve EOS information - Kafka
+  shell: grep "EOS" /tmp/kafka_version_{{ lookup('pipe', 'date +%d%m%Y') }}.txt | awk '{print $3}'
+  register: eos_output
+  when: kafka_service_file.stat.exists == true
+
+- name: Retrieve EOL information - Kafka
+  shell: grep "EOL" /tmp/kafka_version_{{ lookup('pipe', 'date +%d%m%Y') }}.txt | awk '{print $5}'
+  register: eol_output
+  when: kafka_service_file.stat.exists == true
+
+- name: Add EOS and EOL in CSV - Kafka
+  lineinfile:
+    path: "{{ DIRECTORY }}/{{ PROJECT }}_component_version_{{ lookup('pipe', 'date +%d%m%Y') }}.csv"
+    line: "{{ ansible_hostname }},{{ ansible_default_ipv4.address }},kafka/zookeeper,{{ version_output.stdout }},{{ eos_output.stdout }},{{ eol_output.stdout }}"
+    create: yes
+    insertafter: EOF
+  when: kafka_service_file.stat.exists == true
+  delegate_to: localhost
+
+- name: Remove files - Kafka
+  file:
+    path: /tmp/kafka_version_{{ lookup('pipe', 'date +%d%m%Y') }}.txt
+    state: absent
+  when: kafka_service_file.stat.exists == true

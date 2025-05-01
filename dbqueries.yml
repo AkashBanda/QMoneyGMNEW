@@ -1,0 +1,10 @@
+---
+- name: Audit Report Role - Database Queries
+  hosts: dbqueries
+  vars_files:
+#    - group_vars/db-variables.yml
+    - group_vars/audit-report-variables.yml
+  #remote_user: agencyroot
+  become: yes
+  roles :
+    - dbqueries

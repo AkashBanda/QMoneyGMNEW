@@ -1,0 +1,76 @@
+---
+- name: Check if java command exists - Java
+  ansible.builtin.command: "which java"
+  ignore_errors: true
+  register: java_check
+
+- name: Exit or skip if java command not found - Java
+  block:
+    - ansible.builtin.fail:
+        msg: "Java is not installed. Please install Java before running this script."
+      when: java_check.rc != 0
+
+    - name: Execute Bash script - JAVA
+      ansible.builtin.shell: |
+        #!/bin/bash
+        filename="/tmp/java_version_{{ lookup('pipe', 'date +%d%m%Y') }}.txt"
+        # Get the Java version
+        java_version=$(java -version 2>&1 | awk -F '"' '/version/ {split($2, a, "."); print a[1]"."a[2];}')
+
+        # Path to the CSV file
+        csv_file="/tmp/version.csv"
+
+        # Search for a row in the CSV file where the Java version matches
+        j_row=$(awk -v java_version="$java_version" -F',' '$8 == java_version' "$csv_file")
+
+        # Check if a row is found
+        if [ -n "$j_row" ]; then
+            echo "Java version matches an entry in the CSV file."
+            # Extract next two cells
+            j_c=$(echo "$j_row" | awk -F',' '{print "EOS: "$9,"EOL: " $10}')
+            echo "Output: $j_c" >> "$filename"
+        fi
+  when: java_check.rc == 0
+
+- name: create directory if not exists - Java
+  file:
+    path: "{{ DIRECTORY }}"
+    state: directory
+  delegate_to: localhost
+  run_once: true
+
+- name: Retrieve version information - Java
+  shell: java -version 2>&1 | grep 'java version' | head -n 1 | awk -F'"' '{print $2}'
+  register: version_output
+  when: java_check.rc == 0
+
+- name: Retrieve EOS information - Java
+  shell: grep "EOS" /tmp/java_version_{{ lookup('pipe', 'date +%d%m%Y') }}.txt | awk '{print $3}'
+  register: eos_output
+  when: java_check.rc == 0
+
+- name: Retrieve EOL information - Java
+  shell: grep "EOL" /tmp/java_version_{{ lookup('pipe', 'date +%d%m%Y') }}.txt | awk '{print $5}'
+  register: eol_output
+  when: java_check.rc == 0
+
+- name: Remove files - Java
+  file:
+    path: /tmp/java_version_{{ lookup('pipe', 'date +%d%m%Y') }}.txt
+    state: absent
+  when: java_check.rc == 0
+
+- name: Add EOS and EOL in CSV - Java
+  lineinfile:
+    path: "{{ DIRECTORY }}/{{ PROJECT }}_component_version_{{ lookup('pipe', 'date +%d%m%Y') }}.csv"
+    line: "{{ ansible_hostname }},{{ ansible_default_ipv4.address }},java,{{ version_output.stdout }},{{ eos_output.stdout }},{{ eol_output.stdout }}"
+    create: yes
+    insertafter: EOF
+  when: java_check.rc == 0
+  delegate_to: localhost
+
+- name: Remove files - Java
+  file:
+    path: /tmp/java_version_{{ lookup('pipe', 'date +%d%m%Y') }}.txt
+    state: absent
+  when: java_check.rc == 0

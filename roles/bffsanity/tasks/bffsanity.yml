@@ -1,0 +1,64 @@
+---
+- name: Run grep and awk command
+  shell: |
+    grep -i 'Method :' /data/QCell/MobifinElitePortal/Node/BFF/logs/RequestLog/adapter/{{ BFFSANITYDATE }}/*log | awk -F ':' '{print $2, $3}'
+  register: grep_output
+
+- name: Create directory if not exists
+  file:
+    path: "{{ DIRECTORY }}"
+    state: directory
+  delegate_to: localhost
+  run_once: true
+
+- name: save grep output to a file
+  lineinfile:
+    line: "{{ grep_output.stdout }}"
+    path: "{{ DIRECTORY }}/{{ PROJECT }}_bff_sanity_{{ BFFSANITYDATE }}.txt"
+    create: yes
+  delegate_to: localhost
+
+- name: Create CSV
+  file:
+    path: "{{ DIRECTORY }}/{{ PROJECT }}_bff_sanity_{{ BFFSANITYDATE }}.csv"
+    state: touch
+  delegate_to: localhost
+  run_once: true
+
+- name: Add data in CSV
+  shell: |
+    cat {{ DIRECTORY }}/{{ PROJECT }}_bff_sanity_{{ BFFSANITYDATE }}.txt | sed 's/^[[:space:]]*//' | sed 's/[[:space:]]*$//' | sort | uniq -c | awk '{$1=$1; print}' OFS=',' > "{{ DIRECTORY }}/{{ PROJECT }}_bff_sanity_{{ BFFSANITYDATE }}.csv"
+  delegate_to: localhost
+  run_once: true
+
+- name: Add blank row in CSV file
+  lineinfile:
+    path: "{{ DIRECTORY }}/{{ PROJECT }}_Audit_Report_Metrics_{{ lookup('pipe', 'date +%d%m%Y') }}.csv"
+    line: ",,,,"
+    create: yes
+    insertafter: EOF
+  delegate_to: localhost
+  run_once: true
+
+- name: Append CSV data to destination file
+  ansible.builtin.shell:
+    cmd: |
+      while IFS= read -r line; do
+        echo "$line" >> {{ DIRECTORY }}/{{ PROJECT }}_Audit_Report_Metrics_{{ lookup('pipe', 'date +%d%m%Y') }}.csv
+      done < "{{ DIRECTORY }}/{{ PROJECT }}_bff_sanity_{{ BFFSANITYDATE }}.csv"
+  delegate_to: localhost
+  run_once: true
+
+- name: Remove file
+  file:
+    path: "{{ DIRECTORY }}/{{ PROJECT }}_bff_sanity_{{ BFFSANITYDATE }}.txt"
+    state: absent
+  delegate_to: localhost
+  run_once: true
+
+- name: Remove file
+  file:
+    path: "{{ DIRECTORY }}/{{ PROJECT }}_bff_sanity_{{ BFFSANITYDATE }}.csv"
+    state: absent
+  delegate_to: localhost
+  run_once: true

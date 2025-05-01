@@ -1,0 +1,54 @@
+- name: Audit Report Role - Load Average
+  hosts: sshuser
+  vars_files:
+    - group_vars/audit-report-variables.yml
+  become: yes
+  tasks:
+
+    - name: Get space utilization
+      shell: "df -h | awk '$5+0 > 60 {print $6, $5}'"
+      register: space
+#      delegate_to: localhost
+
+    - name: Get load high
+      shell: "cat /data/Audit_Report/QCellGM/Load/{{ ansible_default_ipv4.address }}/Loadeverage.yml | sort | tail -1"
+      register: loadresult
+      delegate_to: localhost
+  
+    - name: Get load average
+      shell: "awk '{sum+=$1} END {print sum/NR}' /data/Audit_Report/QCellGM/Load/{{ ansible_default_ipv4.address }}/Loadeverage.yml"
+      register: eveloadresult
+      delegate_to: localhost
+
+    - name: Add blank row in CSV file
+      lineinfile:
+        path: "{{ DIRECTORY }}/{{ PROJECT }}_Audit_Report_Metrics_{{ lookup('pipe', 'date +%d%m%Y') }}.csv"
+        line: ",,,,"
+        create: yes
+        insertafter: EOF
+      delegate_to: localhost
+      run_once: true
+    
+    - name: Create directory if not exists
+      file:
+        path: "{{ DIRECTORY }}"
+        state: directory
+      delegate_to: localhost
+      run_once: true
+
+    - name: Add line in CSV file
+      lineinfile:
+        path: "{{ DIRECTORY }}/{{ PROJECT }}_Audit_Report_Metrics_{{ lookup('pipe', 'date +%d%m%Y') }}.csv"
+        line: Hostname,IP_Address,AVG_CPU,MAX_CPU,Disk_partition
+        create: yes
+        insertafter: EOF
+      delegate_to: localhost
+      run_once: true
+
+    - name: Add uptime and timesync data in CSV
+      lineinfile:
+        path: "{{ DIRECTORY }}/{{ PROJECT }}_Audit_Report_Metrics_{{ lookup('pipe', 'date +%d%m%Y') }}.csv"
+        line: "{{ ansible_hostname }},{{ ansible_default_ipv4.address }},{{ eveloadresult.stdout }},{{ loadresult.stdout }},{{ space.stdout }}"
+        create: yes
+        insertafter: EOF
+      delegate_to: localhost

@@ -1,0 +1,19 @@
+i---
+- name: Audit Report Role - Email
+  hosts: localhost
+  vars_files:
+    - group_vars/test.yml
+  tasks:
+    - name: send email
+      mail:
+        host: smtp.panamaxil.com
+        port: 587
+        from: mfs.sre@panamaxil.com
+        to: bhagyesh.vaniya@panamaxil.com
+        subject: "{{ PROJECT }} TEST"
+        body: |
+          Hello Team,
+
+          PFA Attachment
+        attach:
+          - "{{ DIRECTORY }}/test.tar.gz"

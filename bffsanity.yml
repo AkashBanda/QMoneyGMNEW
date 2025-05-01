@@ -1,0 +1,9 @@
+---
+- name: Audit Report Role - BFF Sanity
+  hosts: bffsanity
+  vars_files:
+    - group_vars/audit-report-variables.yml
+  #remote_user: vicky.kariya
+  become: yes
+  roles :
+    - bffsanity

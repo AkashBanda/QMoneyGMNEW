@@ -1,0 +1,23 @@
+---
+# tasks file for dbqueries
+
+- name: Add blank row in CSV file
+  lineinfile:
+    path: "{{ DIRECTORY }}/{{ PROJECT }}_Audit_Report_Metrics_{{ lookup('pipe', 'date +%d%m%Y') }}.csv"
+    line: ",,"
+    create: yes
+    insertafter: EOF
+  delegate_to: localhost
+  run_once: true
+
+- include: db-fregmentation.yml
+
+- include: count-master-rows.yml
+
+- include: count-oldest-row.yml
+
+- include: count-fsm-api.yml
+
+- include: users.yml
+
+- include: last-24h-api-requests.yml

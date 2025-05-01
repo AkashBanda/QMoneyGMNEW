@@ -1,0 +1,15 @@
+---
+- name: Run MySQL query - DB Fragmentation
+  shell: |
+    mysql -h 172.16.10.49 -u SupportLead -P 6055 -pQw12s#fdga MobifinEliteTransactionEngine_QCell -e "select ENGINE, concat(TABLE_SCHEMA, '.', TABLE_NAME) as table_name, round(DATA_LENGTH/1024/1024, 2) as data_length, round(INDEX_LENGTH/1024/1024, 2) as index_length, round(DATA_FREE/1024/1024, 2) as data_free, (data_free/(index_length+data_length)) as frag_ratio FROM information_schema.tables WHERE DATA_FREE > 0 ORDER BY frag_ratio DESC" | sed 's/\t/,/g' > /tmp/db_fregmentation_{{ lookup('pipe', 'date +%d%m%Y') }}.csv
+
+- name: Copy csv file to Ansible server
+  fetch:
+    src: /tmp/db_fregmentation_{{ lookup('pipe', 'date +%d%m%Y') }}.csv
+    dest: "{{ DIRECTORY }}/{{ PROJECT }}_db_fregmentation_{{ lookup('pipe', 'date +%d%m%Y') }}.csv"
+    flat: yes 
+
+- name: Remove DB Fragmentation CSV
+  file:
+    path: /tmp/db_fregmentation_{{ lookup('pipe', 'date +%d%m%Y') }}.csv
+    state: absent

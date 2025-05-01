@@ -1,0 +1,71 @@
+---
+- name: Check if mysql command exists - MySQL
+  ansible.builtin.command: "which mysql"
+  ignore_errors: true
+  register: mysql_check
+
+- name: Exit or skip if mysql command not found - MySQL
+  block:
+    - ansible.builtin.fail:
+        msg: "Mysql is not installed. Please install Mysql before running this script."
+      when: mysql_check.rc != 0
+
+    - name: Execute Bash script - MySQL
+      ansible.builtin.shell: |
+        #!/bin/bash
+        filename="/tmp/mysql_version_{{ lookup('pipe', 'date +%d%m%Y') }}.txt"
+        # Get the MySQL version
+        my_version=$(mysql --version | awk '{print substr($3,1,3)}')
+
+        # Path to the CSV file
+        csv_file="/tmp/version.csv"
+
+        # Search for a row in the CSV file where the MySQL version matches
+        my_row=$(awk -v my_version="$my_version" -F',' '$20 == my_version' "$csv_file")
+
+        # Check if a row is found
+        if [ -n "$my_row" ]; then
+            echo "MySQL version matches an entry in the CSV file."
+            # Extract next two cells
+            my_c=$(echo "$my_row" | awk -F',' '{print "EOS: "$21,"EOL: " $22}')
+            echo "Output: $my_c" >> "$filename"
+        fi
+      register: my_task_output
+  when: mysql_check.rc == 0
+
+- name: create directory if not exists - MySQL
+  file:
+    path: "{{ DIRECTORY }}"
+    state: directory
+  delegate_to: localhost
+  run_once: true
+
+- name: Retrieve version information - MySQL
+  shell: mysql --version | awk '{print $3}'
+  register: version_output
+  when: mysql_check.rc == 0
+
+- name: Retrieve EOS information - MySQL
+  shell: grep "EOS" /tmp/mysql_version_{{ lookup('pipe', 'date +%d%m%Y') }}.txt | awk '{print $3}'
+  register: eos_output
+  when: mysql_check.rc == 0
+
+- name: Retrieve EOL information - MySQL
+  shell: grep "EOL" /tmp/mysql_version_{{ lookup('pipe', 'date +%d%m%Y') }}.txt | awk '{print $5}'
+  register: eol_output
+  when: mysql_check.rc == 0
+
+- name: Add EOS and EOL in CSV - MySQL
+  lineinfile:
+    path: "{{ DIRECTORY }}/{{ PROJECT }}_component_version_{{ lookup('pipe', 'date +%d%m%Y') }}.csv"
+    line: "{{ ansible_hostname }},{{ ansible_default_ipv4.address }},mysql,{{ version_output.stdout }},{{ eos_output.stdout }},{{ eol_output.stdout }}"
+    create: yes
+    insertafter: EOF
+  when: mysql_check.rc == 0
+  delegate_to: localhost
+
+- name: Remove files - MySQL
+  file:
+    path: /tmp/mysql_version_{{ lookup('pipe', 'date +%d%m%Y') }}.txt
+    state: absent
+  when: mysql_check.rc == 0

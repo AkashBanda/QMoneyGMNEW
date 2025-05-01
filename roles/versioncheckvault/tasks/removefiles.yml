@@ -1,0 +1,11 @@
+---
+
+- name: Remove files
+  file:
+    path: /tmp/version.csv
+    state: absent
+
+#- name: Remove files
+#  file:
+#    path: /tmp/*_{{ lookup('pipe', 'date +%d%m%Y') }}.txt
+#    state: absent

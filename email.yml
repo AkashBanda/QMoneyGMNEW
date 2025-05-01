@@ -1,0 +1,32 @@
+---
+- name: Audit Report Role - Email
+  hosts: localhost
+  vars_files:
+    - group_vars/audit-report-variables.yml
+  tasks:
+    - name: send email
+      mail:
+        host: 10.85.10.2
+        port: 587
+        from: mfs.techsupport@panamaxil.com
+        to: akash.banda@panamaxil.com
+        subject: "{{ PROJECT }} PRD - Audit Report - {{ QUARTER }}-{{ YEAR }}"
+        body: |
+          Hello Team,
+
+          We have generated audit reports for the following project.
+
+          Project - "{{ PROJECT }}"
+          Quarter - "{{ QUARTER }}"
+          Year - "{{ YEAR }}"
+          
+          Kindly review attached reports and update them in respective project. Additionaly, please upload them to OneDrive.
+
+          Regards,
+          MFS Support Team
+        attach:
+          - "{{ DIRECTORY }}/{{ PROJECT }}_Audit_Report_Metrics_{{ lookup('pipe', 'date +%d%m%Y') }}.csv"
+          - "{{ DIRECTORY }}/{{ PROJECT }}_db_fregmentation_{{ lookup('pipe', 'date +%d%m%Y') }}.csv"
+          - "{{ DIRECTORY }}/{{ PROJECT }}_sshuser_{{ lookup('pipe', 'date +%d%m%Y') }}.csv"
+          - "{{ DIRECTORY }}/{{ PROJECT }}_component_version_{{ lookup('pipe', 'date +%d%m%Y') }}.csv"
+          - "{{ DIRECTORY }}/{{ PROJECT }}_sudoers_{{ lookup('pipe', 'date +%d%m%Y') }}.csv"

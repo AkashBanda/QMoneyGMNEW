@@ -1,0 +1,43 @@
+- name: Audit Report Role - Code Backup
+  hosts: sshuser
+  vars_files:
+    - group_vars/audit-report-variables.yml
+  become: yes
+  tasks:
+    - name: Code Backup File
+      shell: "ls -ltr /root/script/cronlogs/Code_tarbackup* | tail -1 | awk '{print $9}'"
+      register: CodeBackupFile
+    
+    - name: Code Backup Size
+      shell: "cat {{ CodeBackupFile.stdout }} | grep total | awk '{print $3}'"
+      register: CodeBackupSize
+     
+    - name: Code Backup Date
+      shell: "cat {{ CodeBackupFile.stdout }} | head -1 | awk '{print $1}'"
+      register: CodeBackupDate 
+     
+    - name: Add blank row in CSV file
+      lineinfile:
+        path: "{{ DIRECTORY }}/{{ PROJECT }}_Audit_Report_Metrics_{{ lookup('pipe', 'date +%d%m%Y') }}.csv"
+        line: ",,,,"
+        create: yes
+        insertafter: EOF
+      delegate_to: localhost
+      run_once: true
+    
+    - name: Add line in CSV file
+      lineinfile:
+        path: "{{ DIRECTORY }}/{{ PROJECT }}_Audit_Report_Metrics_{{ lookup('pipe', 'date +%d%m%Y') }}.csv"
+        line: Hostname,IP_Address,CodeBackupSize,LastBackupdate
+        create: yes
+        insertafter: EOF
+      delegate_to: localhost
+      run_once: true
+    
+    - name: Add uptime and timesync data in CSV
+      lineinfile:
+        path: "{{ DIRECTORY }}/{{ PROJECT }}_Audit_Report_Metrics_{{ lookup('pipe', 'date +%d%m%Y') }}.csv"
+        line: "{{ ansible_hostname }},{{ ansible_default_ipv4.address }},{{ CodeBackupSize.stdout }},{{ CodeBackupDate.stdout }}"
+        create: yes
+        insertafter: EOF
+      delegate_to: localhost

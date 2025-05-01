@@ -1,0 +1,58 @@
+---
+- name: Execute Bash script - OS
+  ansible.builtin.shell: |
+      #!/bin/bash
+      filename="/tmp/os_version_{{ lookup('pipe', 'date +%d%m%Y') }}.txt"
+      if o_version=$(awk -F= '/VERSION_ID/ {gsub(/"/, "", $2); print $2}' /etc/os-release); then
+            OS=$(grep PRETTY_NAME /etc/os-release | awk -F'"' '{print $2}')
+      else
+         exit 1
+      fi
+
+         # Path to the CSV file
+      csv_file="/tmp/version.csv"
+
+         # Get the entire row from the CSV file where the OS version matches
+      matched_row=$(awk -v o_version="$o_version" -F',' '$29 == o_version' "$csv_file")
+
+         # Check if a row is found
+      if [ -n "$matched_row" ]; then
+         echo "OS version matches an entry in the CSV file."
+            # Extract next two cells
+         next_cells=$(echo "$matched_row" | awk -F',' '{print "EOS: "$30,"EOL: " $31}')
+         echo "Output: $next_cells" >> "$filename"
+      else
+         echo "OS version does not match any entry in the CSV file."
+      fi
+
+- name: create directory if not exists - OS
+  file:
+    path: "{{ DIRECTORY }}"
+    state: directory
+  delegate_to: localhost
+  run_once: true
+
+- name: Retrieve version information - OS
+  shell: grep PRETTY_NAME /etc/os-release | awk -F'"' '{print $2}'
+  register: version_output
+
+- name: Retrieve EOS information - OS
+  shell: grep "EOS" /tmp/os_version_{{ lookup('pipe', 'date +%d%m%Y') }}.txt | awk '{print $3}'
+  register: eos_output
+
+- name: Retrieve EOL information - OS
+  shell: grep "EOL" /tmp/os_version_{{ lookup('pipe', 'date +%d%m%Y') }}.txt | awk '{print $5}'
+  register: eol_output
+
+- name: Add EOS and EOL in CSV - OS
+  lineinfile:
+    path: "{{ DIRECTORY }}/{{ PROJECT }}_component_version_{{ lookup('pipe', 'date +%d%m%Y') }}.csv"
+    line: "{{ ansible_hostname }},{{ ansible_default_ipv4.address }},os,{{ version_output.stdout }},{{ eos_output.stdout }},{{ eol_output.stdout }}"
+    create: yes
+    insertafter: EOF
+  delegate_to: localhost
+
+- name: Remove files - OS
+  file:
+    path: /tmp/os_version_{{ lookup('pipe', 'date +%d%m%Y') }}.txt
+    state: absent

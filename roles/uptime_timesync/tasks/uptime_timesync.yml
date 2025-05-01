@@ -1,0 +1,43 @@
+---
+- name: Retrieve uptime information
+  shell: uptime | awk '{print $3}' | sed 's/,$//'
+  register: uptime_output
+
+- name: Retrive Time Zone information
+  shell: timedatectl | grep "Time zone" | awk '{print $4}' | sed 's/[^a-zA-Z]*//g'
+  register: timezone_output
+
+- name: Retrive Time Sync information
+  shell: timedatectl | grep "synchronized:" | cut -d ":" -f2- | sed 's/^[[:space:]]*//'
+  register: timesync_output
+
+- name: Create directory if not exists
+  file:
+    path: "{{ DIRECTORY }}"
+    state: directory
+  delegate_to: localhost
+  run_once: true
+
+#- name: Upload CSV File
+#  copy:
+#    src: uptime_timesync.csv
+#    dest: {{ DIRECTORY }}/{{ PROJECT }}_uptime_timesync_{{ PROJECT }}_Audit_Report_Metrics_{{ lookup('pipe', 'date +%d%m%Y') }}.csv
+#  delegate_to: localhost
+#  run_once: true
+
+- name: Add line in CSV file
+  lineinfile:
+    path: "{{ DIRECTORY }}/{{ PROJECT }}_Audit_Report_Metrics_{{ lookup('pipe', 'date +%d%m%Y') }}.csv"
+    line: Hostname,IP_Address,Time_Zone,Time_Sync,uptime
+    create: yes
+    insertafter: EOF
+  delegate_to: localhost
+  run_once: true
+
+- name: Add uptime and timesync data in CSV
+  lineinfile:
+    path: "{{ DIRECTORY }}/{{ PROJECT }}_Audit_Report_Metrics_{{ lookup('pipe', 'date +%d%m%Y') }}.csv"
+    line: "{{ ansible_hostname }},{{ ansible_default_ipv4.address }},{{ timezone_output.stdout }},{{ timesync_output.stdout }},{{ uptime_output.stdout }}"
+    create: yes
+    insertafter: EOF
+  delegate_to: localhost

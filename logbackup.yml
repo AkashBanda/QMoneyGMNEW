@@ -1,0 +1,415 @@
+- name: Audit Report Role - Code Backup
+  hosts: sshuser
+  vars_files:
+    - group_vars/audit-report-variables.yml
+  become: yes
+  tasks:
+    - name: Add blank row in CSV file
+      lineinfile:
+        path: "{{ DIRECTORY }}/{{ PROJECT }}_Audit_Report_Metrics_{{ lookup('pipe', 'date +%d%m%Y') }}.csv"
+        line: ",,,,"
+        create: yes
+        insertafter: EOF
+      delegate_to: localhost
+      run_once: true
+    - name: Add header CSV file
+      lineinfile:
+        path: "{{ DIRECTORY }}/{{ PROJECT }}_Audit_Report_Metrics_{{ lookup('pipe', 'date +%d%m%Y') }}.csv"
+        line: Hostname,IP_Address,Service,LogBackupSize,LastBackupdate
+        create: yes
+        insertafter: EOF
+      delegate_to: localhost
+      run_once: true
+
+    - set_fact: 
+        service: Adapter 
+    - name: Code Backup File
+      shell: "ls -ltr /root/script/cronlogs/Adapter_tarbackup* | tail -1 | awk '{print $9}'"
+      register: CodeBackupFile
+      when: ansible_default_ipv4.address in ["172.16.10.42", "172.16.10.43"]
+    - name: Code Backup Size
+      shell: "cat {{ CodeBackupFile.stdout }} | grep total | awk '{print $3}'"
+      register: CodeBackupSize
+      when: ansible_default_ipv4.address in ["172.16.10.42", "172.16.10.43"]
+    - name: Code Backup Date
+      shell: "cat {{ CodeBackupFile.stdout }} | head -1 | awk '{print $1}'"
+      register: CodeBackupDate
+      when: ansible_default_ipv4.address in ["172.16.10.42", "172.16.10.43"]
+    - name: Add data in CSV
+      lineinfile:
+        path: "{{ DIRECTORY }}/{{ PROJECT }}_Audit_Report_Metrics_{{ lookup('pipe', 'date +%d%m%Y') }}.csv"
+        line: "{{ ansible_hostname }},{{ ansible_default_ipv4.address }},{{ service }},{{ CodeBackupSize.stdout }},{{ CodeBackupDate.stdout }}"
+        create: yes
+        insertafter: EOF
+      delegate_to: localhost
+      when: ansible_default_ipv4.address in ["172.16.10.42", "172.16.10.43"]
+ 
+    - set_fact:
+        service: MFC
+    - name: Code Backup File
+      shell: "ls -ltr /root/script/cronlogs/MFC_tarbackup* | tail -1 | awk '{print $9}'"
+      register: CodeBackupFile
+      when: ansible_default_ipv4.address in ["172.16.10.42", "172.16.10.43"]
+    - name: Code Backup Size
+      shell: "cat {{ CodeBackupFile.stdout }} | grep total | awk '{print $3}'"
+      register: CodeBackupSize
+      when: ansible_default_ipv4.address in ["172.16.10.42", "172.16.10.43"]
+    - name: Code Backup Date
+      shell: "cat {{ CodeBackupFile.stdout }} | head -1 | awk '{print $1}'"
+      register: CodeBackupDate
+      when: ansible_default_ipv4.address in ["172.16.10.42", "172.16.10.43"]
+    - name: Add data in CSV
+      lineinfile:
+        path: "{{ DIRECTORY }}/{{ PROJECT }}_Audit_Report_Metrics_{{ lookup('pipe', 'date +%d%m%Y') }}.csv"
+        line: "{{ ansible_hostname }},{{ ansible_default_ipv4.address }},{{ service }},{{ CodeBackupSize.stdout }},{{ CodeBackupDate.stdout }}"
+        create: yes
+        insertafter: EOF
+      delegate_to: localhost
+      when: ansible_default_ipv4.address in ["172.16.10.42", "172.16.10.43"]
+
+
+    - set_fact:
+        service: Transaction
+    - name: Code Backup File
+      shell: "ls -ltr /root/script/cronlogs/Transaction_tarbackup* | tail -1 | awk '{print $9}'"
+      register: CodeBackupFile
+      when: ansible_default_ipv4.address in ["172.16.10.42", "172.16.10.43"]
+    - name: Code Backup Size
+      shell: "cat {{ CodeBackupFile.stdout }} | grep total | awk '{print $3}'"
+      register: CodeBackupSize
+      when: ansible_default_ipv4.address in ["172.16.10.42", "172.16.10.43"]
+    - name: Code Backup Date
+      shell: "cat {{ CodeBackupFile.stdout }} | head -1 | awk '{print $1}'"
+      register: CodeBackupDate
+      when: ansible_default_ipv4.address in ["172.16.10.42", "172.16.10.43"]
+    - name: Add data in CSV
+      lineinfile:
+        path: "{{ DIRECTORY }}/{{ PROJECT }}_Audit_Report_Metrics_{{ lookup('pipe', 'date +%d%m%Y') }}.csv"
+        line: "{{ ansible_hostname }},{{ ansible_default_ipv4.address }},{{ service }},{{ CodeBackupSize.stdout }},{{ CodeBackupDate.stdout }}"
+        create: yes
+        insertafter: EOF
+      delegate_to: localhost
+      when: ansible_default_ipv4.address in ["172.16.10.42", "172.16.10.43"]
+
+    - set_fact:
+        service: Alarm
+    - name: Code Backup File
+      shell: "ls -ltr /root/script/cronlogs/Alarm_tarbackup* | tail -1 | awk '{print $9}'"
+      register: CodeBackupFile
+      when: ansible_default_ipv4.address in ["172.16.10.42", "172.16.10.43"]
+    - name: Code Backup Size
+      shell: "cat {{ CodeBackupFile.stdout }} | grep total | awk '{print $3}'"
+      register: CodeBackupSize
+      when: ansible_default_ipv4.address in ["172.16.10.42", "172.16.10.43"]
+    - name: Code Backup Date
+      shell: "cat {{ CodeBackupFile.stdout }} | head -1 | awk '{print $1}'"
+      register: CodeBackupDate
+      when: ansible_default_ipv4.address in ["172.16.10.42", "172.16.10.43"]
+    - name: Add data in CSV
+      lineinfile:
+        path: "{{ DIRECTORY }}/{{ PROJECT }}_Audit_Report_Metrics_{{ lookup('pipe', 'date +%d%m%Y') }}.csv"
+        line: "{{ ansible_hostname }},{{ ansible_default_ipv4.address }},{{ service }},{{ CodeBackupSize.stdout }},{{ CodeBackupDate.stdout }}"
+        create: yes
+        insertafter: EOF
+      delegate_to: localhost
+      when: ansible_default_ipv4.address in ["172.16.10.42", "172.16.10.43"]    
+
+    - set_fact:
+        service: Timer
+    - name: Code Backup File
+      shell: "ls -ltr /root/script/cronlogs/Timer_tarbackup* | tail -1 | awk '{print $9}'"
+      register: CodeBackupFile
+      when: ansible_default_ipv4.address in ["172.16.10.42", "172.16.10.43"]
+    - name: Code Backup Size
+      shell: "cat {{ CodeBackupFile.stdout }} | grep total | awk '{print $3}'"
+      register: CodeBackupSize
+      when: ansible_default_ipv4.address in ["172.16.10.42", "172.16.10.43"]
+    - name: Code Backup Date
+      shell: "cat {{ CodeBackupFile.stdout }} | head -1 | awk '{print $1}'"
+      register: CodeBackupDate
+      when: ansible_default_ipv4.address in ["172.16.10.42", "172.16.10.43"]
+    - name: Add data in CSV
+      lineinfile:
+        path: "{{ DIRECTORY }}/{{ PROJECT }}_Audit_Report_Metrics_{{ lookup('pipe', 'date +%d%m%Y') }}.csv"
+        line: "{{ ansible_hostname }},{{ ansible_default_ipv4.address }},{{ service }},{{ CodeBackupSize.stdout }},{{ CodeBackupDate.stdout }}"
+        create: yes
+        insertafter: EOF
+      delegate_to: localhost
+      when: ansible_default_ipv4.address in ["172.16.10.42", "172.16.10.43"]
+
+    - set_fact:
+        service: Scheduler
+    - name: Code Backup File
+      shell: "ls -ltr /root/script/cronlogs/Scheduler_tarbackup* | tail -1 | awk '{print $9}'"
+      register: CodeBackupFile
+      when: ansible_default_ipv4.address in ["172.16.10.42", "172.16.10.43"]
+    - name: Code Backup Size
+      shell: "cat {{ CodeBackupFile.stdout }} | grep total | awk '{print $3}'"
+      register: CodeBackupSize
+      when: ansible_default_ipv4.address in ["172.16.10.42", "172.16.10.43"]
+    - name: Code Backup Date
+      shell: "cat {{ CodeBackupFile.stdout }} | head -1 | awk '{print $1}'"
+      register: CodeBackupDate
+      when: ansible_default_ipv4.address in ["172.16.10.42", "172.16.10.43"]
+    - name: Add data in CSV
+      lineinfile:
+        path: "{{ DIRECTORY }}/{{ PROJECT }}_Audit_Report_Metrics_{{ lookup('pipe', 'date +%d%m%Y') }}.csv"
+        line: "{{ ansible_hostname }},{{ ansible_default_ipv4.address }},{{ service }},{{ CodeBackupSize.stdout }},{{ CodeBackupDate.stdout }}"
+        create: yes
+        insertafter: EOF
+      delegate_to: localhost
+      when: ansible_default_ipv4.address in ["172.16.10.42", "172.16.10.43"]
+
+    - set_fact:
+        service: VendorIntegration
+    - name: Code Backup File
+      shell: "ls -ltr /root/script/cronlogs/VI_tarbackup* | tail -1 | awk '{print $9}'"
+      register: CodeBackupFile
+      when: ansible_default_ipv4.address in ["172.16.10.40", "172.16.10.41"]
+    - name: Code Backup Size
+      shell: "cat {{ CodeBackupFile.stdout }} | grep total | awk '{print $3}'"
+      register: CodeBackupSize
+      when: ansible_default_ipv4.address in ["172.16.10.40", "172.16.10.41"]
+    - name: Code Backup Date
+      shell: "cat {{ CodeBackupFile.stdout }} | head -1 | awk '{print $1}'"
+      register: CodeBackupDate
+      when: ansible_default_ipv4.address in ["172.16.10.40", "172.16.10.41"]
+    - name: Add data in CSV
+      lineinfile:
+        path: "{{ DIRECTORY }}/{{ PROJECT }}_Audit_Report_Metrics_{{ lookup('pipe', 'date +%d%m%Y') }}.csv"
+        line: "{{ ansible_hostname }},{{ ansible_default_ipv4.address }},{{ service }},{{ CodeBackupSize.stdout }},{{ CodeBackupDate.stdout }}"
+        create: yes
+        insertafter: EOF
+      delegate_to: localhost
+      when: ansible_default_ipv4.address in ["172.16.10.40", "172.16.10.41"]
+
+    - set_fact:
+        service: Jhipster
+    - name: Code Backup File
+      shell: "ls -ltr /root/script/cronlogs/Jhipster_tarbackup* | tail -1 | awk '{print $9}'"
+      register: CodeBackupFile
+      when: ansible_default_ipv4.address in ["172.16.10.40", "172.16.10.41"]
+    - name: Code Backup Size
+      shell: "cat {{ CodeBackupFile.stdout }} | grep total | awk '{print $3}'"
+      register: CodeBackupSize
+      when: ansible_default_ipv4.address in ["172.16.10.40", "172.16.10.41"]
+    - name: Code Backup Date
+      shell: "cat {{ CodeBackupFile.stdout }} | head -1 | awk '{print $1}'"
+      register: CodeBackupDate
+      when: ansible_default_ipv4.address in ["172.16.10.40", "172.16.10.41"]
+    - name: Add data in CSV
+      lineinfile:
+        path: "{{ DIRECTORY }}/{{ PROJECT }}_Audit_Report_Metrics_{{ lookup('pipe', 'date +%d%m%Y') }}.csv"
+        line: "{{ ansible_hostname }},{{ ansible_default_ipv4.address }},{{ service }},{{ CodeBackupSize.stdout }},{{ CodeBackupDate.stdout }}"
+        create: yes
+        insertafter: EOF
+      delegate_to: localhost
+      when: ansible_default_ipv4.address in ["172.16.10.40", "172.16.10.41"]
+
+    - set_fact:
+        service: BFF
+    - name: Code Backup File
+      shell: "ls -ltr /root/script/cronlogs/BFF_tarbackup* | tail -1 | awk '{print $9}'"
+      register: CodeBackupFile
+      when: ansible_default_ipv4.address in ["172.16.10.40", "172.16.10.41"]
+    - name: Code Backup Size
+      shell: "cat {{ CodeBackupFile.stdout }} | grep total | awk '{print $3}'"
+      register: CodeBackupSize
+      when: ansible_default_ipv4.address in ["172.16.10.40", "172.16.10.41"]
+    - name: Code Backup Date
+      shell: "cat {{ CodeBackupFile.stdout }} | head -1 | awk '{print $1}'"
+      register: CodeBackupDate
+      when: ansible_default_ipv4.address in ["172.16.10.40", "172.16.10.41"]
+    - name: Add data in CSV
+      lineinfile:
+        path: "{{ DIRECTORY }}/{{ PROJECT }}_Audit_Report_Metrics_{{ lookup('pipe', 'date +%d%m%Y') }}.csv"
+        line: "{{ ansible_hostname }},{{ ansible_default_ipv4.address }},{{ service }},{{ CodeBackupSize.stdout }},{{ CodeBackupDate.stdout }}"
+        create: yes
+        insertafter: EOF
+      delegate_to: localhost
+      when: ansible_default_ipv4.address in ["172.16.10.40", "172.16.10.41"]
+
+    - set_fact:
+        service: CMS-API
+    - name: Code Backup File
+      shell: "ls -ltr /root/script/cronlogs/CMS-API_tarbackup* | tail -1 | awk '{print $9}'"
+      register: CodeBackupFile
+      when: ansible_default_ipv4.address in ["172.16.10.40", "172.16.10.41"]
+    - name: Code Backup Size
+      shell: "cat {{ CodeBackupFile.stdout }} | grep total | awk '{print $3}'"
+      register: CodeBackupSize
+      when: ansible_default_ipv4.address in ["172.16.10.40", "172.16.10.41"]
+    - name: Code Backup Date
+      shell: "cat {{ CodeBackupFile.stdout }} | head -1 | awk '{print $1}'"
+      register: CodeBackupDate
+      when: ansible_default_ipv4.address in ["172.16.10.40", "172.16.10.41"]
+    - name: Add data in CSV
+      lineinfile:
+        path: "{{ DIRECTORY }}/{{ PROJECT }}_Audit_Report_Metrics_{{ lookup('pipe', 'date +%d%m%Y') }}.csv"
+        line: "{{ ansible_hostname }},{{ ansible_default_ipv4.address }},{{ service }},{{ CodeBackupSize.stdout }},{{ CodeBackupDate.stdout }}"
+        create: yes
+        insertafter: EOF
+      delegate_to: localhost
+      when: ansible_default_ipv4.address in ["172.16.10.40", "172.16.10.41"]
+
+    - set_fact:
+        service: Socket
+    - name: Code Backup File
+      shell: "ls -ltr /root/script/cronlogs/Socket_tarbackup* | tail -1 | awk '{print $9}'"
+      register: CodeBackupFile
+      when: ansible_default_ipv4.address in ["172.16.10.40", "172.16.10.41"]
+    - name: Code Backup Size
+      shell: "cat {{ CodeBackupFile.stdout }} | grep total | awk '{print $3}'"
+      register: CodeBackupSize
+      when: ansible_default_ipv4.address in ["172.16.10.40", "172.16.10.41"]
+    - name: Code Backup Date
+      shell: "cat {{ CodeBackupFile.stdout }} | head -1 | awk '{print $1}'"
+      register: CodeBackupDate
+      when: ansible_default_ipv4.address in ["172.16.10.40", "172.16.10.41"]
+    - name: Add data in CSV
+      lineinfile:
+        path: "{{ DIRECTORY }}/{{ PROJECT }}_Audit_Report_Metrics_{{ lookup('pipe', 'date +%d%m%Y') }}.csv"
+        line: "{{ ansible_hostname }},{{ ansible_default_ipv4.address }},{{ service }},{{ CodeBackupSize.stdout }},{{ CodeBackupDate.stdout }}"
+        create: yes
+        insertafter: EOF
+      delegate_to: localhost
+      when: ansible_default_ipv4.address in ["172.16.10.40", "172.16.10.41"]
+
+    - set_fact:
+        service: USSD
+    - name: Code Backup File
+      shell: "ls -ltr /root/script/cronlogs/USSD_tarbackup* | tail -1 | awk '{print $9}'"
+      register: CodeBackupFile
+      when: ansible_default_ipv4.address in ["172.16.10.40", "172.16.10.41"]
+    - name: Code Backup Size
+      shell: "cat {{ CodeBackupFile.stdout }} | grep total | awk '{print $3}'"
+      register: CodeBackupSize
+      when: ansible_default_ipv4.address in ["172.16.10.40", "172.16.10.41"]
+    - name: Code Backup Date
+      shell: "cat {{ CodeBackupFile.stdout }} | head -1 | awk '{print $1}'"
+      register: CodeBackupDate
+      when: ansible_default_ipv4.address in ["172.16.10.40", "172.16.10.41"]
+    - name: Add data in CSV
+      lineinfile:
+        path: "{{ DIRECTORY }}/{{ PROJECT }}_Audit_Report_Metrics_{{ lookup('pipe', 'date +%d%m%Y') }}.csv"
+        line: "{{ ansible_hostname }},{{ ansible_default_ipv4.address }},{{ service }},{{ CodeBackupSize.stdout }},{{ CodeBackupDate.stdout }}"
+        create: yes
+        insertafter: EOF
+      delegate_to: localhost
+      when: ansible_default_ipv4.address in ["172.16.10.40", "172.16.10.41"]
+
+    - set_fact:
+        service: LogEvent
+    - name: Code Backup File
+      shell: "ls -ltr /root/script/cronlogs/LogEvent_tarbackup* | tail -1 | awk '{print $9}'"
+      register: CodeBackupFile
+      when: ansible_default_ipv4.address in ["172.16.10.44", "172.16.10.45"]
+    - name: Code Backup Size
+      shell: "cat {{ CodeBackupFile.stdout }} | grep total | awk '{print $3}'"
+      register: CodeBackupSize
+      when: ansible_default_ipv4.address in ["172.16.10.44", "172.16.10.45"]
+    - name: Code Backup Date
+      shell: "cat {{ CodeBackupFile.stdout }} | head -1 | awk '{print $1}'"
+      register: CodeBackupDate
+      when: ansible_default_ipv4.address in ["172.16.10.44", "172.16.10.45"]
+    - name: Add data in CSV
+      lineinfile:
+        path: "{{ DIRECTORY }}/{{ PROJECT }}_Audit_Report_Metrics_{{ lookup('pipe', 'date +%d%m%Y') }}.csv"
+        line: "{{ ansible_hostname }},{{ ansible_default_ipv4.address }},{{ service }},{{ CodeBackupSize.stdout }},{{ CodeBackupDate.stdout }}"
+        create: yes
+        insertafter: EOF
+      delegate_to: localhost
+      when: ansible_default_ipv4.address in ["172.16.10.44", "172.16.10.45"]
+
+    - set_fact:
+        service: Database
+    - name: Code Backup File
+      shell: "ls -ltr /root/script/cronlogs/Database_tarbackup* | tail -1 | awk '{print $9}'"
+      register: CodeBackupFile
+      when: ansible_default_ipv4.address in ["172.16.10.44", "172.16.10.45"]
+    - name: Code Backup Size
+      shell: "cat {{ CodeBackupFile.stdout }} | grep total | awk '{print $3}'"
+      register: CodeBackupSize
+      when: ansible_default_ipv4.address in ["172.16.10.44", "172.16.10.45"]
+    - name: Code Backup Date
+      shell: "cat {{ CodeBackupFile.stdout }} | head -1 | awk '{print $1}'"
+      register: CodeBackupDate
+      when: ansible_default_ipv4.address in ["172.16.10.44", "172.16.10.45"]
+    - name: Add data in CSV
+      lineinfile:
+        path: "{{ DIRECTORY }}/{{ PROJECT }}_Audit_Report_Metrics_{{ lookup('pipe', 'date +%d%m%Y') }}.csv"
+        line: "{{ ansible_hostname }},{{ ansible_default_ipv4.address }},{{ service }},{{ CodeBackupSize.stdout }},{{ CodeBackupDate.stdout }}"
+        create: yes
+        insertafter: EOF
+      delegate_to: localhost
+      when: ansible_default_ipv4.address in ["172.16.10.44", "172.16.10.45"]
+
+    - set_fact:
+        service: Kafka
+    - name: Code Backup File
+      shell: "ls -ltr /root/script/cronlogs/Kafka_tarbackup* | tail -1 | awk '{print $9}'"
+      register: CodeBackupFile
+      when: ansible_default_ipv4.address in ["172.16.10.46", "172.16.10.47", "172.16.10.48"]
+    - name: Code Backup Size
+      shell: "cat {{ CodeBackupFile.stdout }} | grep total | awk '{print $3}'"
+      register: CodeBackupSize
+      when: ansible_default_ipv4.address in ["172.16.10.46", "172.16.10.47", "172.16.10.48"]
+    - name: Code Backup Date
+      shell: "cat {{ CodeBackupFile.stdout }} | head -1 | awk '{print $1}'"
+      register: CodeBackupDate
+      when: ansible_default_ipv4.address in ["172.16.10.46", "172.16.10.47", "172.16.10.48"]
+    - name: Add data in CSV
+      lineinfile:
+        path: "{{ DIRECTORY }}/{{ PROJECT }}_Audit_Report_Metrics_{{ lookup('pipe', 'date +%d%m%Y') }}.csv"
+        line: "{{ ansible_hostname }},{{ ansible_default_ipv4.address }},{{ service }},{{ CodeBackupSize.stdout }},{{ CodeBackupDate.stdout }}"
+        create: yes
+        insertafter: EOF
+      delegate_to: localhost
+      when: ansible_default_ipv4.address in ["172.16.10.46", "172.16.10.47", "172.16.10.48"]
+
+    - set_fact:
+        service: Mongo
+    - name: Code Backup File
+      shell: "ls -ltr /root/script/cronlogs/MongoDump_tarbackup* | tail -1 | awk '{print $9}'"
+      register: CodeBackupFile
+      when: ansible_default_ipv4.address in ["172.16.10.46", "172.16.10.47", "172.16.10.48"]
+    - name: Code Backup Size
+      shell: "cat {{ CodeBackupFile.stdout }} | grep total | awk '{print $3}'"
+      register: CodeBackupSize
+      when: ansible_default_ipv4.address in ["172.16.10.46", "172.16.10.47", "172.16.10.48"]
+    - name: Code Backup Date
+      shell: "cat {{ CodeBackupFile.stdout }} | head -1 | awk '{print $1}'"
+      register: CodeBackupDate
+      when: ansible_default_ipv4.address in ["172.16.10.46", "172.16.10.47", "172.16.10.48"]
+    - name: Add data in CSV
+      lineinfile:
+        path: "{{ DIRECTORY }}/{{ PROJECT }}_Audit_Report_Metrics_{{ lookup('pipe', 'date +%d%m%Y') }}.csv"
+        line: "{{ ansible_hostname }},{{ ansible_default_ipv4.address }},{{ service }},{{ CodeBackupSize.stdout }},{{ CodeBackupDate.stdout }}"
+        create: yes
+        insertafter: EOF
+      delegate_to: localhost
+      when: ansible_default_ipv4.address in ["172.16.10.46", "172.16.10.47", "172.16.10.48"]
+
+    - set_fact:
+        service: Mysql
+    - name: Code Backup File
+      shell: "ls -ltr /root/script/cronlogs/Mysql_tarbackup* | tail -1 | awk '{print $9}'"
+      register: CodeBackupFile
+      when: ansible_default_ipv4.address in ["172.16.10.49", "172.16.10.50", "172.16.10.51"]
+    - name: Code Backup Size
+      shell: "cat {{ CodeBackupFile.stdout }} | grep total | awk '{print $3}'"
+      register: CodeBackupSize
+      when: ansible_default_ipv4.address in ["172.16.10.49", "172.16.10.50", "172.16.10.51"]
+    - name: Code Backup Date
+      shell: "cat {{ CodeBackupFile.stdout }} | head -1 | awk '{print $1}'"
+      register: CodeBackupDate
+      when: ansible_default_ipv4.address in ["172.16.10.49", "172.16.10.50", "172.16.10.51"]
+    - name: Add data in CSV
+      lineinfile:
+        path: "{{ DIRECTORY }}/{{ PROJECT }}_Audit_Report_Metrics_{{ lookup('pipe', 'date +%d%m%Y') }}.csv"
+        line: "{{ ansible_hostname }},{{ ansible_default_ipv4.address }},{{ service }},{{ CodeBackupSize.stdout }},{{ CodeBackupDate.stdout }}"
+        create: yes
+        insertafter: EOF
+      delegate_to: localhost
+      when: ansible_default_ipv4.address in ["172.16.10.49", "172.16.10.50", "172.16.10.51"]
+

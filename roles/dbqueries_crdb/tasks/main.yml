@@ -1,0 +1,17 @@
+---
+# tasks file for dbqueries_crdb
+
+- name: Excute shell script
+  template:
+    src: db_queries.sh
+    dest: /data/Ansible/Common-CoreComponents/Audit-Report/roles/dbqueries_crdb/files/db_queries.sh
+    mode: '0750'
+
+- name: Execute shell script
+  command: /data/Ansible/Common-CoreComponents/Audit-Report/roles/dbqueries_crdb/files/db_queries.sh
+
+- name: Remove file
+  file:
+    path: /data/Ansible/Common-CoreComponents/Audit-Report/roles/dbqueries_crdb/files/db_queries.sh
+    state: absent
+  delegate_to: localhost

@@ -1,0 +1,70 @@
+- name: Check if node command exists - NodeJS
+  ansible.builtin.command: "which node"
+  ignore_errors: true
+  register: node_check
+
+- name: Exit or skip if node command not found - NodeJS
+  block:
+    - ansible.builtin.fail:
+        msg: "Node is not installed. Please install NodeJS before running this script."
+      when: node_check.rc != 0
+
+    - name: Execute Bash script
+      ansible.builtin.shell: |
+        #!/bin/bash
+        filename="/tmp/node_version_{{ lookup('pipe', 'date +%d%m%Y') }}.txt"
+        # Get the NodeJS version
+        n_version=$(node -v | cut -d '.' -f 1,2 | cut -c 2-)
+
+        # Path to the CSV file
+        csv_file="/tmp/version.csv"
+
+        # Search for a row in the CSV file where the NodeJS version matches
+        n_row=$(awk -v n_version="$n_version" -F',' '$23 == n_version' "$csv_file")
+
+        # Check if a row is found
+        if [ -n "$n_row" ]; then
+            echo "NodeJS version matches an entry in the CSV file."
+            # Extract next two cells
+            n_c=$(echo "$n_row" | awk -F',' '{print "EOS: "$24,"EOL: " $25}')
+            echo "Output: $n_c" >> "$filename"
+        fi
+      register: my_task_output
+  when: node_check.rc == 0
+
+- name: create directory if not exists - NodeJS
+  file:
+    path: "{{ DIRECTORY }}"
+    state: directory
+  delegate_to: localhost
+  run_once: true
+
+- name: Retrieve version information - NodeJS
+  shell: node -v | cut -c 2-
+  register: version_output
+  when: node_check.rc == 0
+
+- name: Retrieve EOS information - NodeJS
+  shell: grep "EOS" /tmp/node_version_{{ lookup('pipe', 'date +%d%m%Y') }}.txt | awk '{print $3}'
+  register: eos_output
+  when: node_check.rc == 0
+
+- name: Retrieve EOL information - NodeJS
+  shell: grep "EOL" /tmp/node_version_{{ lookup('pipe', 'date +%d%m%Y') }}.txt | awk '{print $5}'
+  register: eol_output
+  when: node_check.rc == 0
+
+- name: Add EOS and EOL in CSV - NodeJS
+  lineinfile:
+    path: "{{ DIRECTORY }}/{{ PROJECT }}_component_version_{{ lookup('pipe', 'date +%d%m%Y') }}.csv"
+    line: "{{ ansible_hostname }},{{ ansible_default_ipv4.address }},node,{{ version_output.stdout }},{{ eos_output.stdout }},{{ eol_output.stdout }}"
+    create: yes
+    insertafter: EOF
+  when: node_check.rc == 0
+  delegate_to: localhost
+
+- name: Remove files - NodeJS
+  file:
+    path: /tmp/node_version_{{ lookup('pipe', 'date +%d%m%Y') }}.txt
+    state: absent
+  when: node_check.rc == 0

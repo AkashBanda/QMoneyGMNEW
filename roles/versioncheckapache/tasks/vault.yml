@@ -1,0 +1,71 @@
+---
+- name: Check if vault command exists - Vault
+  ansible.builtin.command: "which vault"
+  ignore_errors: true
+  register: vault_check
+
+- name: Exit or skip if vault command not found - Vault
+  block:
+    - ansible.builtin.fail:
+        msg: "Vault is not installed. Please install Vault before running this script."
+      when: vault_check.rc != 0
+
+    - name: Execute Bash script
+      ansible.builtin.shell: |
+        #!/bin/bash
+        filename="/tmp/vault_version_{{ lookup('pipe', 'date +%d%m%Y') }}.txt"
+        # Get the Vault version
+        v_version=$(vault -v | awk '{print $2}' | sed 's/^v//' | awk -F '.' '{print $1"."$2}')
+
+        # Path to the CSV file
+        csv_file="/tmp/version.csv"
+
+        # Search for a row in the CSV file where the Vault version matches
+        v_row=$(awk -v v_version="$v_version" -F',' '$35 == v_version' "$csv_file")
+
+        # Check if a row is found
+        if [ -n "$v_row" ]; then
+            echo "Vault version matches an entry in the CSV file."
+            # Extract next two cells
+            v_c=$(echo "$v_row" | awk -F',' '{print "EOS: "$36,"EOL: " $37}')
+            echo "Output: $v_c" >> "$filename"
+        fi
+      register: v_task_output
+  when: vault_check.rc == 0
+  
+- name: create directory if not exists - Vault
+  file:
+    path: "{{ DIRECTORY }}"
+    state: directory
+  delegate_to: localhost
+  run_once: true
+
+- name: Retrieve version information - Vault
+  shell: vault -v | awk '{print $2}' | sed 's/^v//'
+  register: version_output
+  when: vault_check.rc == 0
+
+- name: Retrieve EOS information - Vault
+  shell: grep "EOS" /tmp/vault_version_{{ lookup('pipe', 'date +%d%m%Y') }}.txt | awk '{print $3}'
+  register: eos_output
+  when: vault_check.rc == 0
+
+- name: Retrieve EOL information - Vault
+  shell: grep "EOL" /tmp/vault_version_{{ lookup('pipe', 'date +%d%m%Y') }}.txt | awk '{print $5}'
+  register: eol_output
+  when: vault_check.rc == 0
+
+- name: Add EOS and EOL in CSV - Vault
+  lineinfile:
+    path: "{{ DIRECTORY }}/{{ PROJECT }}_component_version_{{ lookup('pipe', 'date +%d%m%Y') }}.csv"
+    line: "{{ ansible_hostname }},{{ ansible_default_ipv4.address }},vault,{{ version_output.stdout }},{{ eos_output.stdout }},{{ eol_output.stdout }}"
+    create: yes
+    insertafter: EOF
+  when: vault_check.rc == 0
+  delegate_to: localhost
+
+- name: Remove files - Vault
+  file:
+    path: /tmp/vault_version_{{ lookup('pipe', 'date +%d%m%Y') }}.txt
+    state: absent
+  when: vault_check.rc == 0

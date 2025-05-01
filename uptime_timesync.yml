@@ -1,0 +1,9 @@
+---
+- name: Audit Report Role - Uptime and Time Sync
+  hosts: uptime_timesync
+  vars_files:
+    - group_vars/audit-report-variables.yml
+  #remote_user: vicky.kariya
+  become: yes
+  roles :
+    - uptime_timesync

@@ -1,0 +1,10 @@
+---
+- name: Audit Report Role - Version Check
+  hosts: versioncheckmongo
+  vars_files:
+    - group_vars/audit-report-variables.yml
+  #remote_user: vicky.kariya
+  become: yes
+  serial: 1
+  roles :
+    - versioncheckmongo

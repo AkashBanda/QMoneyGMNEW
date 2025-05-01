@@ -1,0 +1,6 @@
+---
+# tasks file for versioncheck
+
+- include: versioncheck.yml
+
+- include: removefiles.yml

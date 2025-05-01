@@ -1,0 +1,48 @@
+---
+- import_playbook: uptime_timesync.yml 
+
+#- import_playbook: sslexpirychecker.yml
+
+#- import_playbook: dbqueries.yml
+###  when: PROJECT != "CRDB"
+
+####- import_playbook: dbqueries_crdb.yml
+#######  when: PROJECT == "CRDB"
+
+#- import_playbook: bffsanity.yml
+
+#- import_playbook: versioncheckapache.yml
+
+#- import_playbook: versioncheckkafka.yml
+
+#- import_playbook: versioncheckkeepalived.yml
+
+#- import_playbook: versioncheckmongo.yml
+
+#- import_playbook: versioncheckmysql.yml
+
+#- import_playbook: versionchecknode.yml
+
+#- import_playbook: versioncheckjavaos.yml
+
+#- import_playbook: versioncheckphp.yml
+
+#- import_playbook: versioncheckvault.yml
+
+#- import_playbook: versioncheckhaproxy.yml
+
+#- import_playbook: sshuser.yml
+
+#########- import_playbook: email.yml
+#######  when: PROJECT != "CRDB"
+
+########- import_playbook: email_crdb.yml
+#######  when: PROJECT == "CRDB"
+
+#- import_playbook: loadevg.yml
+
+#- import_playbook: codebackup.yml
+
+#- import_playbook: logbackup.yml
+
+#- import_playbook: email.yml

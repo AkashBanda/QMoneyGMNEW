@@ -1,0 +1,3 @@
+{% for row in db_fragmentation_result.stdout_lines %}
+{{ row | join(',') }}
+{% endfor %}

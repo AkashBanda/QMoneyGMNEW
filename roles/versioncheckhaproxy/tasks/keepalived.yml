@@ -1,0 +1,71 @@
+---
+- name: Check if Keepalived is installed - KeepAlived
+  ansible.builtin.command: yum list installed keepalived
+  register: keepalived_check
+  ignore_errors: true
+
+- name: Display message and skip if Keepalived is not installed - KeepAlived
+  ansible.builtin.debug:
+    msg: "Keepalived is not installed. Skipping execution of the Bash script."
+  when: keepalived_check.rc != 0
+
+- name: Execute Bash script - KeepAlived
+  ansible.builtin.shell: |
+    #!/bin/bash
+
+    # Get the Keepalived version
+    filename="/tmp/keepalived_version_{{ lookup('pipe', 'date +%d%m%Y') }}.txt"
+    keep_version=$(yum list installed | grep keepalived | awk '{print $2}' | cut -d '-' -f1)
+
+    # Path to the CSV file
+    csv_file="/tmp/version.csv"
+
+    # Search for a row in the CSV file where the Keepalived version matches
+    a_row=$(awk -v keep_version="$keep_version" -F',' '$14 == keep_version' "$csv_file")
+
+    # Check if a row is found
+    if [ -n "$a_row" ]; then
+        echo "Keepalived version matches an entry in the CSV file."
+        # Extract next two cells
+        a_c=$(echo "$a_row" | awk -F',' '{print "EOS: "$15,"EOL: " $16}')
+        echo "Output: $a_c" >> "$filename"
+    fi
+  register: keep_task_output
+  when: keepalived_check.rc == 0
+  
+- name: create directory if not exists - KeepAlived
+  file:
+    path: "{{ DIRECTORY }}"
+    state: directory
+  delegate_to: localhost
+  run_once: true
+
+- name: Retrieve version information - KeepAlived
+  shell: yum list installed | grep keepalived | awk '{print $2}' | cut -d '-' -f1
+  register: version_output
+  when: keepalived_check.rc == 0
+
+- name: Retrieve EOS information - KeepAlived
+  shell: grep "EOS" /tmp/keepalived_version_{{ lookup('pipe', 'date +%d%m%Y') }}.txt | awk '{print $3}'
+  register: eos_output
+  when: keepalived_check.rc == 0
+
+- name: Retrieve EOL information - KeepAlived
+  shell: grep "EOL" /tmp/keepalived_version_{{ lookup('pipe', 'date +%d%m%Y') }}.txt | awk '{print $5}'
+  register: eol_output
+  when: keepalived_check.rc == 0
+
+- name: Add EOS and EOL in CSV - KeepAlived
+  lineinfile:
+    path: "{{ DIRECTORY }}/{{ PROJECT }}_component_version_{{ lookup('pipe', 'date +%d%m%Y') }}.csv"
+    line: "{{ ansible_hostname }},{{ ansible_default_ipv4.address }},keepalived,{{ version_output.stdout }},{{ eos_output.stdout }},{{ eol_output.stdout }}"
+    create: yes
+    insertafter: EOF
+  when: keepalived_check.rc == 0
+  delegate_to: localhost
+
+- name: Remove files - KeepAlived
+  file:
+    path: /tmp/keepalived_version_{{ lookup('pipe', 'date +%d%m%Y') }}.txt
+    state: absent
+  when: keepalived_check.rc == 0

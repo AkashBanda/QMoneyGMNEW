@@ -1,0 +1,98 @@
+---
+- name: Run MySQL query - Count Transactional Oldest Rows - CR
+  shell: |
+    mysql -h 172.16.10.49 -u SupportLead -P 6055 -pQw12s#fdga MobifinEliteTransactionEngine_QCell -e "SELECT TransactionTime FROM TBLTransactionHistory WHERE TransactionType='CR' ORDER BY TransactionTime ASC LIMIT 1" | sed 's/\t/,/g' | awk 'NR==2 {print $1 ,$2}'
+  register: torcr_18_20_result
+  when: MR == "18" or MR == "20"
+
+- name: Run MySQL query - Count Transactional Oldest Rows - DR
+  shell: |
+    mysql -h 172.16.10.49 -u SupportLead -P 6055 -pQw12s#fdga MobifinEliteTransactionEngine_QCell -e "SELECT TransactionTime FROM TBLTransactionHistory WHERE TransactionType='DR' ORDER BY TransactionTime ASC LIMIT 1" | sed 's/\t/,/g' | awk 'NR==2 {print $1 ,$2}'
+  register: tordr_18_20_result
+  when: MR == "18" or MR == "20"
+
+#- name: Print output in file
+#  lineinfile:
+#    path: {{ DIRECTORY }}/{{ PROJECT }}_audit_report_db_{{ lookup('pipe', 'date +%d%m%Y') }}.txt
+#    line: "Oldest row in DB for Transactional is CR = {{ torcr_18_20_result.stdout }} and DR = {{ tordr_18_20_result.stdout }}"
+#    create: yes
+#  delegate_to: localhost
+#  when: MR == "18" or MR == "20"
+
+- name: Print output in file
+  lineinfile:
+    path: "{{ DIRECTORY }}/{{ PROJECT }}_Audit_Report_Metrics_{{ lookup('pipe', 'date +%d%m%Y') }}.csv"
+    line: "Oldest row in DB for Transactional,CR,{{ torcr_18_20_result.stdout }},DR,{{ tordr_18_20_result.stdout }}"
+    create: yes
+    insertafter: EOF
+  delegate_to: localhost
+  when: MR == "18" or MR == "20"
+
+- name: Run MySQL query - Count Transactional Oldest Rows
+  shell: |
+    mysql -h 172.16.10.49 -u SupportLead -P 6055 -pQw12s#fdga MobifinEliteTransactionEngine_QCell -e "SELECT TransactionTime FROM TBLTransactionHSTMain ORDER BY TransactionTime ASC LIMIT 1" | sed 's/\t/,/g' | awk 'NR==2 {print $1 ,$2}'
+  register: tor_21_result
+  when: MR == "21"
+
+#- name: Print output in file
+#  lineinfile:
+#    path: {{ DIRECTORY }}/{{ PROJECT }}_audit_report_db_{{ lookup('pipe', 'date +%d%m%Y') }}.txt
+#    line: "Oldest row in DB for Transactional is {{ tor_21_result.stdout }}"
+#    create: yes
+#  delegate_to: localhost
+#  when: MR == "21"
+
+- name: Print output in file
+  lineinfile:
+    path: "{{ DIRECTORY }}/{{ PROJECT }}_Audit_Report_Metrics_{{ lookup('pipe', 'date +%d%m%Y') }}.csv"
+    line: "Oldest row in DB for Transactional,{{ tor_21_result.stdout }}"
+    create: yes
+    insertafter: EOF
+  delegate_to: localhost
+  when: MR == "21"
+
+##############################################
+
+- name: Run MySQL query - Count Non-Transactional Oldest Rows
+  shell: |
+    mysql -h 172.16.10.49 -u SupportLead -P 6055 -pQw12s#fdga MobifinEliteTransactionEngine_QCell -e "SELECT TransactionTime FROM TBLTransactionHistory WHERE TransactionType='NonTransactional' ORDER BY TransactionTime ASC LIMIT 1" | sed 's/\t/,/g' | awk 'NR==2 {print $1 ,$2}'
+  register: ntor_18_result
+  when: MR == "18"
+
+#- name: Print output in file
+#  lineinfile:
+#    path: {{ DIRECTORY }}/{{ PROJECT }}_audit_report_db_{{ lookup('pipe', 'date +%d%m%Y') }}.txt
+#    line: "Oldest row in DB for Non-Transactional is {{ ntor_18_result.stdout }}"
+#  delegate_to: localhost
+#  when: MR == "18"
+
+- name: Print output in file
+  lineinfile:
+    path: "{{ DIRECTORY }}/{{ PROJECT }}_Audit_Report_Metrics_{{ lookup('pipe', 'date +%d%m%Y') }}.csv"
+    line: "Oldest row in DB for Non-Transactional,{{ ntor_18_result.stdout }}"
+    create: yes
+    insertafter: EOF
+  delegate_to: localhost
+  when: MR == "18"
+
+- name: Run MySQL query - Count Non-Transactional Oldest Rows
+  shell: |
+    mysql -h 172.16.10.49 -u SupportLead -P 6055 -pQw12s#fdga MobifinEliteTransactionEngine_QCell -e "SELECT TransactionTime FROM TBLNonTransactionHST ORDER BY TransactionTime ASC LIMIT 1" | sed 's/\t/,/g' | awk 'NR==2 {print $1 ,$2}'
+  register: ntor_20_21_result
+  when: MR == "20" or MR == "21"
+
+#- name: Print output in file
+#  lineinfile:
+#    path: {{ DIRECTORY }}/{{ PROJECT }}_audit_report_db_{{ lookup('pipe', 'date +%d%m%Y') }}.txt
+#    line: "Oldest row in DB for Non-Transactional is {{ ntor_20_21_result.stdout }}"
+#  delegate_to: localhost
+#  when: MR == "20" or MR == "21"
+
+- name: Print output in file
+  lineinfile:
+    path: "{{ DIRECTORY }}/{{ PROJECT }}_Audit_Report_Metrics_{{ lookup('pipe', 'date +%d%m%Y') }}.csv"
+    line: "Oldest row in DB for Non-Transactional,{{ ntor_20_21_result.stdout }}"
+    create: yes
+    insertafter: EOF
+  delegate_to: localhost
+  when: MR == "20" or MR == "21"

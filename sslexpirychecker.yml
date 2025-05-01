@@ -1,0 +1,11 @@
+---
+- name: Audit Report Role - SSL Certificate Expiry
+  hosts: localhost
+  vars_files:
+    - group_vars/audit-report-variables.yml
+    - group_vars/subdomains.yml
+  #remote_user: vicky.kariya
+  become: yes
+
+  roles :
+    - sslexpirychecker

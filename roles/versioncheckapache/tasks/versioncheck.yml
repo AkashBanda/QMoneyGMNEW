@@ -1,0 +1,30 @@
+---
+- name: Upload csv file
+  copy:
+    src: version.csv
+    dest: /tmp/version.csv
+
+- name: Add line in CSV file
+  lineinfile:
+    path: "{{ DIRECTORY }}/{{ PROJECT }}_component_version_{{ lookup('pipe', 'date +%d%m%Y') }}.csv"
+    line: Hostname,IP_Address,Component,Version,EOS,EOL
+    create: yes
+    insertafter: EOF
+  delegate_to: localhost
+  run_once: true
+
+- name: Include roles
+  include_tasks:
+    file: "{{ item }}"
+  loop:
+    - apache.yml
+#    - haproxy.yml
+#    - java.yml
+#    - kafka.yml
+#    - keepalived.yml
+#    - mongo.yml
+#    - mysql.yml
+#    - node.yml
+#    - os.yml
+#    - php.yml
+#    - vault.yml

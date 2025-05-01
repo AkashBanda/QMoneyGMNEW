@@ -1,0 +1,71 @@
+---
+- name: Check if mongo command exists - Mongo
+  ansible.builtin.command: "which mongo"
+  ignore_errors: true
+  register: mongo_check
+
+- name: Exit or skip if java command not found - Mongo
+  block:
+    - ansible.builtin.fail:
+        msg: "Mongo is not installed. Please install Mongo before running this script."
+      when: mongo_check.rc != 0
+
+    - name: Execute Bash script
+      ansible.builtin.shell: |
+        #!/bin/bash
+        filename="/tmp/mongo_version_{{ lookup('pipe', 'date +%d%m%Y') }}.txt"
+        # Get the Mongo version
+        m_version=$(mongod --version | awk 'NR==1{sub(/^v/, "", $3); split($3, a, "."); print a[1]"."a[2]}')
+
+        # Path to the CSV file
+        csv_file="/tmp/version.csv"
+
+        # Search for a row in the CSV file where the Java version matches
+        m_row=$(awk -v m_version="$m_version" -F',' '$17 == m_version' "$csv_file")
+
+        # Check if a row is found
+        if [ -n "$m_row" ]; then
+            echo "Mongo version matches an entry in the CSV file."
+            # Extract next two cells
+            m_c=$(echo "$m_row" | awk -F',' '{print "EOS: "$18,"EOL: " $19}')
+            echo "Output: $m_c" >> "$filename"
+        fi
+      register: mongo_task_output
+  when: mongo_check.rc == 0
+  
+- name: create directory if not exists - Mongo
+  file:
+    path: "{{ DIRECTORY }}"
+    state: directory
+  delegate_to: localhost
+  run_once: true
+
+- name: Retrieve version information - Mongo
+  shell: mongod --version | awk 'NR==1 {print $3}'
+  register: version_output
+  when: mongo_check.rc == 0
+
+- name: Retrieve EOS information - Mongo
+  shell: grep "EOS" /tmp/mongo_version_{{ lookup('pipe', 'date +%d%m%Y') }}.txt | awk '{print $3}'
+  register: eos_output
+  when: mongo_check.rc == 0
+
+- name: Retrieve EOL information - Mongo
+  shell: grep "EOL" /tmp/mongo_version_{{ lookup('pipe', 'date +%d%m%Y') }}.txt | awk '{print $5}'
+  register: eol_output
+  when: mongo_check.rc == 0
+
+- name: Add EOS and EOL in CSV - Mongo
+  lineinfile:
+    path: "{{ DIRECTORY }}/{{ PROJECT }}_component_version_{{ lookup('pipe', 'date +%d%m%Y') }}.csv"
+    line: "{{ ansible_hostname }},{{ ansible_default_ipv4.address }},mongo,{{ version_output.stdout }},{{ eos_output.stdout }},{{ eol_output.stdout }}"
+    create: yes
+    insertafter: EOF
+  when: mongo_check.rc == 0
+  delegate_to: localhost
+
+- name: Remove files - Mongo
+  file:
+    path: /tmp/mongo_version_{{ lookup('pipe', 'date +%d%m%Y') }}.txt
+    state: absent
+  when: mongo_check.rc == 0

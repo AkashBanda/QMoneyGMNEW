@@ -1,0 +1,20 @@
+---
+- name: Run MySQL query - Count of FSM APIs
+  shell: |
+    mysql -h 172.16.10.49 -u SupportLead -P 6055 -pQw12s#fdga MobifinEliteAdmin_QCell -e "select COUNT(*) from TBLMAdapterApi" | sed 's/\t/,/g' | awk 'NR==2 {print $1}'
+  register: fsmapi_result
+
+#- name: Print output in file
+#  lineinfile:
+#    path: {{ DIRECTORY }}/{{ PROJECT }}_audit_report_db_{{ lookup('pipe', 'date +%d%m%Y') }}.txt
+#    line: "Count of FSM APIs is {{ fsmapi_result.stdout }}"
+#    create: yes
+#  delegate_to: localhost
+
+- name: Print output in file
+  lineinfile:
+    path: "{{ DIRECTORY }}/{{ PROJECT }}_Audit_Report_Metrics_{{ lookup('pipe', 'date +%d%m%Y') }}.csv"
+    line: "Count of FSM APIs,{{ fsmapi_result.stdout }}"
+    create: yes
+    insertafter: EOF
+  delegate_to: localhost

@@ -1,0 +1,73 @@
+---
+- name: Check if haproxy command exists - HAProxy
+  ansible.builtin.command: "which haproxy"
+  ignore_errors: true
+  register: haproxy_check
+  when: ansible_default_ipv4.address in ["172.16.10.40", "172.16.10.41"]
+
+- name: Exit if haproxy command not found - HAProxy
+  block:
+    - ansible.builtin.fail:
+        msg: "HAProxy is not installed. Please install HAProxy before running this script."
+      when: haproxy_check.rc != 0 and ansible_default_ipv4.address in ["172.16.10.40", "172.16.10.41"]
+
+    - name: Execute Bash script
+      ansible.builtin.shell: |
+        #!/bin/bash
+        filename="/tmp/haproxy_version_{{ lookup('pipe', 'date +%d%m%Y') }}.txt"
+        # Get the HAProxy version
+        ha_version=$(haproxy -v | sed -n 's/.*version \([0-9.]*\).*/\1/p')
+
+        # Path to the CSV file
+        csv_file="/tmp/version.csv"
+
+        # Search for a row in the CSV file where the HAProxy version matches
+        h_row=$(awk -v ha_version="$ha_version" -F',' '$5 == ha_version' "$csv_file")
+
+        # Check if a row is found
+        if [ -n "$h_row" ]; then
+          echo "HA Proxy version matches an entry in the CSV file."
+          # Extract next two cells
+          h_c=$(echo "$h_row" | awk -F',' '{print "EOS: "$6,"EOL: " $7}')
+          echo "Output: $h_c" >> "$filename"
+        fi
+      register: script_output
+      when: ansible_default_ipv4.address in ["172.16.10.40", "172.16.10.41"]  
+  when: haproxy_check.rc == 0 and ansible_default_ipv4.address in ["172.16.10.40", "172.16.10.41"]
+
+- name: create directory if not exists - HAProxy
+  file:
+    path: "{{ DIRECTORY }}"
+    state: directory
+  delegate_to: localhost
+  run_once: true
+  
+- name: Retrieve version information - HAProxy
+  shell: haproxy -v | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | awk -F'.' '{print $1"."$2}'
+  register: version_output
+  when: haproxy_check.rc == 0 and ansible_default_ipv4.address in ["172.16.10.40", "172.16.10.41"]
+
+- name: Retrieve EOS information - HAProxy
+  shell: grep "EOS" /tmp/haproxy_version_{{ lookup('pipe', 'date +%d%m%Y') }}.txt | awk '{print $3}'
+  register: eos_output
+  when: haproxy_check.rc == 0 and ansible_default_ipv4.address in ["172.16.10.40", "172.16.10.41"]
+
+- name: Retrieve EOL information - HAProxy
+  shell: grep "EOL" /tmp/haproxy_version_{{ lookup('pipe', 'date +%d%m%Y') }}.txt | awk '{print $5}'
+  register: eol_output
+  when: haproxy_check.rc == 0 and ansible_default_ipv4.address in ["172.16.10.40", "172.16.10.41"]
+
+- name: Add EOS and EOL in CSV - HAProxy
+  lineinfile:
+    path: "{{ DIRECTORY }}/{{ PROJECT }}_component_version_{{ lookup('pipe', 'date +%d%m%Y') }}.csv"
+    line: "{{ ansible_hostname }},{{ ansible_default_ipv4.address }},haproxy,{{ version_output.stdout }},{{ eos_output.stdout }},{{ eol_output.stdout }}"
+    create: yes
+    insertafter: EOF
+  when: haproxy_check.rc == 0 and ansible_default_ipv4.address in ["172.16.10.40", "172.16.10.41"]
+  delegate_to: localhost
+
+- name: Remove files - HAProxy
+  file:
+    path: /tmp/haproxy_version_{{ lookup('pipe', 'date +%d%m%Y') }}.txt
+    state: absent
+  when: haproxy_check.rc == 0 and ansible_default_ipv4.address in ["172.16.10.40", "172.16.10.41"]

@@ -1,0 +1,71 @@
+---
+- name: Check if php command exists - PHP
+  ansible.builtin.command: "which php"
+  ignore_errors: true
+  register: php_check
+
+- name: Exit or skip if php command not found - PHP
+  block:
+    - ansible.builtin.fail:
+        msg: "PHP is not installed. Please install PHP before running this script."
+      when: php_check.rc != 0
+
+    - name: Execute Bash script
+      ansible.builtin.shell: |
+        #!/bin/bash
+        filename="/tmp/php_version_{{ lookup('pipe', 'date +%d%m%Y') }}.txt"
+        # Get the PHP version
+        p_version=$(php -v | head -n 1 | cut -d' ' -f2 | awk -F '.' '{print $1"."$2}')
+
+        # Path to the CSV file
+        csv_file="/tmp/version.csv"
+
+        # Search for a row in the CSV file where the PHP version matches
+        p_row=$(awk -v p_version="$p_version" -F',' '$32 == p_version' "$csv_file")
+
+        # Check if a row is found
+        if [ -n "$p_row" ]; then
+            echo "PHP version matches an entry in the CSV file."
+            # Extract next two cells
+            p_c=$(echo "$p_row" | awk -F',' '{print "EOS: "$33,"EOL: " $34}')
+            echo "Output: $p_c" >> "$filename"
+        fi
+      register: p_task_output
+  when: php_check.rc == 0
+
+- name: create directory if not exists - PHP
+  file:
+    path: "{{ DIRECTORY }}"
+    state: directory
+  delegate_to: localhost
+  run_once: true
+  
+- name: Retrieve version information - PHP
+  shell: php -v | head -n 1 | cut -d' ' -f2
+  register: version_output
+  when: php_check.rc == 0
+
+- name: Retrieve EOS information - PHP
+  shell: grep "EOS" /tmp/php_version_{{ lookup('pipe', 'date +%d%m%Y') }}.txt | awk '{print $3}'
+  register: eos_output
+  when: php_check.rc == 0
+
+- name: Retrieve EOL information - PHP
+  shell: grep "EOL" /tmp/php_version_{{ lookup('pipe', 'date +%d%m%Y') }}.txt | awk '{print $5}'
+  register: eol_output
+  when: php_check.rc == 0
+
+- name: Add EOS and EOL in CSV - PHP
+  lineinfile:
+    path: "{{ DIRECTORY }}/{{ PROJECT }}_component_version_{{ lookup('pipe', 'date +%d%m%Y') }}.csv"
+    line: "{{ ansible_hostname }},{{ ansible_default_ipv4.address }},php,{{ version_output.stdout }},{{ eos_output.stdout }},{{ eol_output.stdout }}"
+    create: yes
+    insertafter: EOF
+  when: php_check.rc == 0
+  delegate_to: localhost
+
+- name: Remove files - PHP
+  file:
+    path: /tmp/php_version_{{ lookup('pipe', 'date +%d%m%Y') }}.txt
+    state: absent
+  when: php_check.rc == 0

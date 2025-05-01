@@ -1,0 +1,85 @@
+---
+- name: Run awk command
+  shell: |
+    awk -F: '{if (($3 >= 1000) && ($7 == "/bin/bash")) { print $1} }' /etc/passwd
+  register: awk_output
+
+- name: Create directory if not exists
+  file:
+    path: "{{ DIRECTORY }}"
+    state: directory
+  delegate_to: localhost
+  run_once: true
+
+- name: Add line in CSV file
+  lineinfile:
+    path: "{{ DIRECTORY }}/{{ PROJECT }}_sshuser_{{ lookup('pipe', 'date +%d%m%Y') }}.csv"
+    line: Hostname,IP_Address,Users
+    create: yes
+    insertafter: EOF
+  delegate_to: localhost
+  run_once: true
+
+- name: Add users in CSV
+  lineinfile:
+    path: "{{ DIRECTORY }}/{{ PROJECT }}_sshuser_{{ lookup('pipe', 'date +%d%m%Y') }}.csv"
+    line: "{{ ansible_hostname }},{{ ansible_default_ipv4.address }},{{ item }}"
+    create: yes
+    insertafter: EOF
+  loop: "{{ awk_output.stdout_lines }}"
+  delegate_to: localhost
+
+- name: Run grep command - sudo
+  shell: |
+    grep '^wheel:' /etc/group | cut -d: -f4 | tr ',' '\n'
+  register: grep_output
+
+- name: Add line in CSV file - sudo
+  lineinfile:
+    path: "{{ DIRECTORY }}/{{ PROJECT }}_sudoers_{{ lookup('pipe', 'date +%d%m%Y') }}.csv"
+    line: Hostname,IP_Address,Sudoers
+    create: yes
+    insertafter: EOF
+  delegate_to: localhost
+  run_once: true
+
+- name: Add users in CSV - sudo
+  lineinfile:
+    path: "{{ DIRECTORY }}/{{ PROJECT }}_sudoers_{{ lookup('pipe', 'date +%d%m%Y') }}.csv"
+    line: "{{ ansible_hostname }},{{ ansible_default_ipv4.address }},{{ item }}"
+    create: yes
+    insertafter: EOF
+  loop: "{{ grep_output.stdout_lines }}"
+  delegate_to: localhost
+
+- name: Run grep command - sudo
+  shell: |
+    grep "ALL=(ALL)" /etc/sudoers | grep -v ^\#
+  register: grep2_output
+  ignore_errors: yes
+
+- name: Add users in CSV - sudo
+  lineinfile:
+    path: "{{ DIRECTORY }}/{{ PROJECT }}_sudoers_{{ lookup('pipe', 'date +%d%m%Y') }}.csv"
+    line: "{{ ansible_hostname }},{{ ansible_default_ipv4.address }},{{ item }}"
+    create: yes
+    insertafter: EOF
+  loop: "{{ grep2_output.stdout_lines }}"
+  delegate_to: localhost
+  ignore_errors: yes
+
+- name: Run grep command - sudo
+  shell: |
+    grep "ALL=(ALL)" /etc/sudoers.d/* | grep -v ^\#
+  register: grep3_output
+  ignore_errors: yes
+
+- name: Add users in CSV - sudo
+  lineinfile:
+    path: "{{ DIRECTORY }}/{{ PROJECT }}_sudoers_{{ lookup('pipe', 'date +%d%m%Y') }}.csv"
+    line: "{{ ansible_hostname }},{{ ansible_default_ipv4.address }},{{ item }}"
+    create: yes
+    insertafter: EOF
+  loop: "{{ grep3_output.stdout_lines }}"
+  delegate_to: localhost
+  ignore_errors: yes

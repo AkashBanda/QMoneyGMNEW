@@ -1,0 +1,58 @@
+---
+- name: Check if httpd command exists - Apache
+  ansible.builtin.command: "command -v httpd"
+  register: httpd_check
+  ignore_errors: true
+
+- name: Execute Bash script - Apache
+  ansible.builtin.shell: |
+    #!/bin/bash
+    filename="/tmp/apache_version_{{ lookup('pipe', 'date +%d%m%Y') }}.txt"
+    a_version=$(httpd -v | awk 'NR==1{print $3}' | cut -d'/' -f2 | cut -d'.' -f1,2)
+    # Path to the CSV file
+    csv_file="/tmp/version.csv"
+    m_row=$(awk -v a_version="$a_version" -F',' '$2 == a_version' "$csv_file")
+    # Check if a row is found
+    if [ -n "$m_row" ]; then
+        # Extract next two cells
+        n_c=$(echo "$m_row" | awk -F',' '{print "EOS: "$3,"EOL: " $4}')
+        echo "Output: $n_c" >> "$filename"
+    fi
+  when: httpd_check.rc == 0
+
+- name: create directory if not exists - Apache
+  file:
+    path: "{{ DIRECTORY }}"
+    state: directory
+  delegate_to: localhost
+  run_once: true
+
+- name: Retrieve version information - Apache
+  shell: httpd -v | awk 'NR==1{print $3}' | cut -d'/' -f2
+  register: version_output
+  when: httpd_check.rc == 0
+
+- name: Retrieve EOS information - Apache
+  shell: grep "EOS" /tmp/apache_version_{{ lookup('pipe', 'date +%d%m%Y') }}.txt | awk '{print $3}'
+  register: eos_output
+  when: httpd_check.rc == 0
+
+- name: Retrieve EOL information - Apache
+  shell: grep "EOL" /tmp/apache_version_{{ lookup('pipe', 'date +%d%m%Y') }}.txt | awk '{print $5}'
+  register: eol_output
+  when: httpd_check.rc == 0
+
+- name: Add EOS and EOL in CSV - Apache
+  lineinfile:
+    path: "{{ DIRECTORY }}/{{ PROJECT }}_component_version_{{ lookup('pipe', 'date +%d%m%Y') }}.csv"
+    line: "{{ ansible_hostname }},{{ ansible_default_ipv4.address }},apache,{{ version_output.stdout }},{{ eos_output.stdout }},{{ eol_output.stdout }}"
+    create: yes
+    insertafter: EOF
+  when: httpd_check.rc == 0
+  delegate_to: localhost
+
+- name: Remove files - Apache
+  file:
+    path: /tmp/apache_version_{{ lookup('pipe', 'date +%d%m%Y') }}.txt
+    state: absent
+  when: httpd_check.rc == 0

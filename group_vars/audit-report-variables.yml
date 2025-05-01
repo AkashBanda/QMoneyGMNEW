@@ -1,0 +1,12 @@
+---
+PROJECT: "QCellGM"
+
+QUARTER: "Q1"
+
+YEAR: "2025"
+
+DIRECTORY: "/data/Audit_Report/{{ PROJECT }}/{{ YEAR }}/{{ QUARTER }}"
+
+BFFSANITYDATE: 12-04-2025
+
+MR: "18"
