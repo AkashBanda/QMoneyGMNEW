@@ -1,7 +1,7 @@
 ---
-- import_playbook: uptime_timesync.yml 
+#- import_playbook: uptime_timesync.yml 
 
-#- import_playbook: sslexpirychecker.yml
+- import_playbook: sslexpirychecker.yml
 
 #- import_playbook: dbqueries.yml
 ###  when: PROJECT != "CRDB"
