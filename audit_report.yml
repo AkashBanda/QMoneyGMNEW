@@ -1,7 +1,7 @@
 ---
 #- import_playbook: uptime_timesync.yml 
 
-- import_playbook: sslexpirychecker.yml
+#- import_playbook: sslexpirychecker.yml
 
 #- import_playbook: dbqueries.yml
 ###  when: PROJECT != "CRDB"
@@ -11,7 +11,7 @@
 
 #- import_playbook: bffsanity.yml
 
-#- import_playbook: versioncheckapache.yml
+- import_playbook: versioncheckapache.yml
 
 #- import_playbook: versioncheckkafka.yml
 
