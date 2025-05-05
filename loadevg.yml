@@ -11,12 +11,12 @@
 #      delegate_to: localhost
 
     - name: Get load high
-      shell: "cat /data/Audit_Report/QCellGM/Load/{{ ansible_default_ipv4.address }}/Loadeverage.yml | sort | tail -1"
+      shell: "cat /root/Ansible/QMoneyGM/Load/{{ ansible_default_ipv4.address }}/Loadeverage.yml | sort | tail -1"
       register: loadresult
       delegate_to: localhost
   
     - name: Get load average
-      shell: "awk '{sum+=$1} END {print sum/NR}' /data/Audit_Report/QCellGM/Load/{{ ansible_default_ipv4.address }}/Loadeverage.yml"
+      shell: "awk '{sum+=$1} END {print sum/NR}' /root/Ansible/QMoneyGM/Load/{{ ansible_default_ipv4.address }}/Loadeverage.yml"
       register: eveloadresult
       delegate_to: localhost
 
