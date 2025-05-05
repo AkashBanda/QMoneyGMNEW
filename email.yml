@@ -9,7 +9,7 @@
         host: 10.85.10.2
         port: 587
         from: mfs.techsupport@panamaxil.com
-        to: akash.banda@panamaxil.com
+        to: mfs.support@mobifin.com
         subject: "{{ PROJECT }} PRD - Audit Report - {{ QUARTER }}-{{ YEAR }}"
         body: |
           Hello Team,
