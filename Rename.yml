@@ -1,0 +1,10 @@
+- name: Audit Report Role - Load Average
+  hosts: sshuser
+  become: yes
+  tasks:
+    - name: Get Previous Month
+      shell: date -d "1 day ago" +'%b'"-"'%Y'
+      register: Pdate
+
+    - name: Rename file
+      shell: "mv Loadeverage.yml Loadeverage_{{ Pdate.stdout }}.yml"
