@@ -12,6 +12,6 @@
     - name: Save load average to a file
       lineinfile:
         line: "{{ loadresult.stdout }}"
-        path: "/data/Audit_Report/QCellGM/Load/{{ ansible_default_ipv4.address }}/Loadeverage.yml"
+        path: "/root/Ansible/QMoneyGM/Load/{{ ansible_default_ipv4.address }}/Loadeverage.yml"
         create: yes
       delegate_to: localhost
