@@ -7,4 +7,4 @@
       register: Pdate
 
     - name: Rename file
-      shell: "mv Loadeverage.yml Loadeverage_{{ Pdate.stdout }}.yml"
+      shell: "mv /root/Ansible/QMoneyGM/Load/{{ ansible_default_ipv4.address }}/Loadeverage.yml Loadeverage_{{ Pdate.stdout }}.yml"
