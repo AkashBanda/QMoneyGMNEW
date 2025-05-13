@@ -11,7 +11,8 @@
 #      delegate_to: localhost
 
     - name: Get load high
-      shell: "cat /root/Ansible/QMoneyGM/Load/{{ ansible_default_ipv4.address }}/Loadeverage.yml | sort | tail -1"
+#      shell: "cat /root/Ansible/QMoneyGM/Load/{{ ansible_default_ipv4.address }}/Loadeverage.yml | sort | tail -1"
+      shell: "awk -F, '($1 > max) { max = $1; timestamp = $2 } END { print max, "at", timestamp }' /root/Ansible/QMoneyGM/Load/{{ ansible_default_ipv4.address }}/Loadeverage.yml"
       register: loadresult
       delegate_to: localhost
   
