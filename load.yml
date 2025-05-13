@@ -9,9 +9,13 @@
       shell: "cat /proc/loadavg | awk '{print $1}'"
       register: loadresult
 
+    - name: Get timestamp
+      shell: date +"%Y-%m-%d %H:%M:%S"
+      register: time
+
     - name: Save load average to a file
       lineinfile:
-        line: "{{ loadresult.stdout }}"
+        line: "{{ loadresult.stdout }},{{ time.stdout }}"
         path: "/root/Ansible/QMoneyGM/Load/{{ ansible_default_ipv4.address }}/Loadeverage.yml"
         create: yes
       delegate_to: localhost
