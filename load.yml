@@ -1,8 +1,8 @@
 ---
 - name: Audit Report Role - Load Average
   hosts: sshuser
-  vars_files:
-    - group_vars/audit-report-variables.yml
+#  vars_files:
+#    - group_vars/audit-report-variables.yml
   become: yes
   tasks:
     - name: Get load average
